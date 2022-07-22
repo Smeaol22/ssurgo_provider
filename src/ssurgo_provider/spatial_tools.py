@@ -51,7 +51,7 @@ def retrieve_mu_key_from_raster_by_zone(polygon, ssurgo_folder_path):
     """
     This function retrieve all mukey in the geojson
     Args:
-        polygon (Polygon): polygon represent the area where mu_global should be find
+        polygon (Polygon): polygon represent the area where mu_key should be find
         ssurgo_folder_path (path):
 
     Returns:
@@ -73,7 +73,7 @@ def retrieve_mu_key_from_raster_by_zone(polygon, ssurgo_folder_path):
     for feature in layer_mu_polygon:
         geometry = feature.GetGeometryRef()
         inter = polygon.Intersection(geometry)
-        if not inter.IsEmpty():
+        if inter is not None and inter is not inter.IsEmpty():
             mu_key = int(feature.GetField("MUKEY"))
             if mu_key not in response.keys():
                 response[mu_key] = inter.GetArea()

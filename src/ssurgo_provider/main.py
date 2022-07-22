@@ -7,7 +7,7 @@ from shapely.geometry import Point
 from ssurgo_provider.object.gbd_connect import GbdConnect
 from ssurgo_provider.object.state_info import StateInfoStatus
 from ssurgo_provider.soil_tools import find_soil_id_ref, find_soil_horizon_distribution, extract_soil_horizon_data, \
-    build_soil_composition
+    build_soil_composition, build_soil_composition_without_point
 from ssurgo_provider.spatial_tools import transform_wgs84_to_albers, find_county_id, retrieve_state_code
 
 
@@ -114,3 +114,27 @@ def manage_retrieve_soils_composition(state_info_list):
         [state_info.set_soil(soil_data)
          for state_info, soil_data in zip(sort_by_state[state], soil_data_list)]
     return state_info_list
+
+
+def retrieve_soil_information_from_mukey(pts_info_df, ssurgo_folder_path):
+    """
+        This function is usefull to retrieve soil data from mu_sym and mu_key
+    Args:
+        pts_info_df (dataframe): see with mu_sym mu_key spatial_ver area_symbol for each location (see find_soil_id_ref)
+        ssurgo_folder_path (path): path to the ssurgo database at the state level
+
+    Returns:
+        soil_composition_list (list): list of SsurgoSoilDto, one for each location
+
+    """
+
+    # open connection to geo database
+    gdb_connection = GbdConnect(ssurgo_folder_path)
+    gdb = gdb_connection.gdb
+
+    pts_info_df = find_soil_horizon_distribution(pts_info_df, gdb)
+    soil_data_dict = extract_soil_horizon_data(pts_info_df, gdb)
+    del gdb
+
+    soil_composition_list = build_soil_composition_without_point(pts_info_df, soil_data_dict)
+    return soil_composition_list

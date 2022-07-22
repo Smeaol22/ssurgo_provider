@@ -46,7 +46,7 @@ def find_soil_horizon_distribution(pts_info_df, gdb):
     """
         This function is useful to determine the soil horizon distribution by percentage for each location
     Args:
-        pts_info_df (datframe): with mu_sym mu_key spatial_ver area_symbol for each location (see find_soil_id_ref)
+        pts_info_df (dataframe): with mu_sym mu_key spatial_ver area_symbol for each location (see find_soil_id_ref)
         gdb (DataSource): ssurgo state datasource
 
     Returns:
@@ -69,10 +69,14 @@ def find_soil_horizon_distribution(pts_info_df, gdb):
         co_key_info.sort(reverse=True)
         for idx in pts_info_df[pts_info_df.mu_key == mu_key].index:
             for component_nb in range(0, 3):
-                if co_key_info[component_nb][0] > -1:
-                    pts_info_df[f"co_key_{component_nb}"][idx] = co_key_info[component_nb][1]
-                    pts_info_df[f"co_key_{component_nb}_pct"][idx] = co_key_info[component_nb][0]
-                else:
+                try:
+                    if co_key_info[component_nb][0] > -1:
+                        pts_info_df[f"co_key_{component_nb}"][idx] = co_key_info[component_nb][1]
+                        pts_info_df[f"co_key_{component_nb}_pct"][idx] = co_key_info[component_nb][0]
+                    else:
+                        pts_info_df[f"co_key_{component_nb}"][idx] = None
+                        pts_info_df[f"co_key_{component_nb}_pct"][idx] = None
+                except:
                     pts_info_df[f"co_key_{component_nb}"][idx] = None
                     pts_info_df[f"co_key_{component_nb}_pct"][idx] = None
     return pts_info_df
@@ -130,5 +134,40 @@ def build_soil_composition(pts_info_df, soil_data_dict):
             if soil_horizon is not None:
                 soil_horizon.comppct_r = pt_info.co_key_2_pct
             ssurgo_soil_dto.horizon_2 = soil_horizon
+        soil_composition_list.append(ssurgo_soil_dto)
+    return soil_composition_list
+
+
+def build_soil_composition_without_point(pts_info_df, soil_data_dict):
+    """
+        This function is useful to build list of SsurgoSoilDto for each location
+    Args:
+        pts_info_df (dataframe): see extract_soil_horizon_data
+        soil_data_dict (dict): dict with SoilHorizon for each co_key in pts_info_df
+
+    Returns:
+        soil_composition_list (list): list of SsurgoSoilDto, one for each location in pts_info_df
+    """
+    soil_composition_list = []
+    for _, pt_info in pts_info_df.iterrows():
+        ssurgo_soil_dto = {'mu_key': pt_info.mu_key,
+                           'horizon_0': None,
+                           'horizon_1': None,
+                           'horizon_2': None}
+        if not isnan(pt_info.co_key_0):
+            soil_horizon = soil_data_dict[str(int(pt_info.co_key_0))]
+            if soil_horizon is not None:
+                soil_horizon.comppct_r = pt_info.co_key_0_pct
+            ssurgo_soil_dto['horizon_0'] = soil_horizon
+        if not isnan(pt_info.co_key_1):
+            soil_horizon = soil_data_dict[str(int(pt_info.co_key_1))]
+            if soil_horizon is not None:
+                soil_horizon.comppct_r = pt_info.co_key_1_pct
+            ssurgo_soil_dto['horizon_1'] = soil_horizon
+        if not isnan(pt_info.co_key_2):
+            soil_horizon = soil_data_dict[str(int(pt_info.co_key_2))]
+            if soil_horizon is not None:
+                soil_horizon.comppct_r = pt_info.co_key_2_pct
+            ssurgo_soil_dto['horizon_2'] = soil_horizon
         soil_composition_list.append(ssurgo_soil_dto)
     return soil_composition_list
